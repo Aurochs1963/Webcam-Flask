@@ -1,105 +1,161 @@
-# Projet Flask Webcam PC / PiCamera2
+# 📁 Projet Flask Webcam PC / PiCamera2 : Vision AI Toolkit - Documentation
 
-! documentation en cours de rédaction
+## Description Générale
 
-🔹 Dépendances principales
+Cette application Flask est une plateforme web complète de **vision par ordinateur (computer vision)** et de **traitement d'images**. Elle permet de :
 
-flask
+* Capturer des images et vidéos en direct depuis une webcam USB ou une caméra Raspberry Pi
+* Appliquer en temps réel divers filtres et algorithmes de vision (détection de mouvement, suivi d'objets, YOLO, MediaPipe, etc.)
+* Analyser des images statiques avec une multitude de traitements
+* Interagir avec les images via l'IA générative (GPT-4o) de OpenAI
+* Contrôler des servomoteurs pour orienter une caméra (sur Raspberry Pi)
 
-opencv-python
+## Structure des Fichiers
 
-picamera2 (si Raspberry Pi)
+```
+/project-root
+│
+├── app.py                 # Application Flask principale
+├── keys.py               # Fichier de configuration (clés API, mots de passe)
+├── models/               # Répertoire contenant les modèles de ML pré-entraînés
+│   ├── deploy.prototxt.txt
+│   ├── res10_300x300_ssd_iter_140000.caffemodel
+│   ├── efficientdet_lite0.tflite
+│   └── yolo11n.pt
+├── static/               # Dossier pour les images uploadées/capturées
+├── uploads/              # Dossier pour les vidéos uploadées
+└── templates/            # Dossier des templates HTML
+    ├── index.html
+    └── analyze.html
+```
 
-openai (si tu utilises l’analyse IA)
+## Dépendances et Installation
 
-🔹 Structure projet
+### Clés API (à définir dans `keys.py`)
 
-Webcam-Flask/\
-│── app.py\
-│── keys.py\
-│── templates/\
-│   ├── index.html        (page avec la webcam + boutons capture/analyse)\
-│   └── analyze.html      (analyse + grille interactive + OpenAI)\
-│── static/               (images capturées et extraites)\
-│── models/               (modèles d'analyse des images (Yolo, mediapipe,...))\
-│── uploads/              (vidéos uploadées)\
+```python
+OPENAI_API_KEY = "votre_clé_openai"
+OPENAI_ASSISTANT_ID = "votre_assistant_id"  # (Non utilisé dans ce code)
+APP_PASSWORD_HASH = "hash_du_mot_de_passe"  # (Non utilisé dans ce code)
+```
 
-🔹 Routes Flask
+### Installation des Bibliothèques
 
-/ → page d’accueil avec le flux vidéo (generate_frames()) + boutons
+```bash
+pip install flask werkzeug opencv-python numpy openai picamera2 mediapipe ultralytics
+```
 
-/video_feed → flux vidéo MJPEG (utilisé dans <img src> pour afficher la caméra en direct)
+## Fonctionnalités Principales et Routes Flask
 
-/capture → capture une image via get_frame() et la sauvegarde dans static/captures/
+### A. Flux Vidéo et Capture
 
-/gallery → affiche toutes les images du dossier static/captures/
+| Route | Méthode | Description |
+| :--- | :--- | :--- |
+| `/` | `GET` | Page d'accueil. Affiche la galerie des images capturées. |
+| `/video` | `GET` | Flux vidéo MJPEG en direct. |
+| `/capture` | `POST` | Capture une image depuis le flux vidéo et l'enregistre. |
+| `/set_camera` | `GET` | Change la source vidéo (index de la caméra). |
+| `/set_video` | `POST` | Upload et utilise un fichier vidéo comme source. |
+| `/set_filter?mode=<mode>` | `GET` | Change le filtre appliqué au flux vidéo en direct. |
 
-/delete/<filename> → supprime une capture de la galerie
+**Modes de Filtre Disponibles (`current_filter`):**
 
-/analyze/<filename> → affiche la page d’analyse d’une capture avec la grille
+* `normal`: Flux vidéo brut
+* `motion`: Détection de mouvement
+* `track`: Suivi d'objet (CSRT tracker). Définir la ROI via `/set_roi_web`
+* `yolo`: Détection d'objets avec YOLOv11
+* `mediapipe`: Détection d'objets avec MediaPipe
+* `pose`: Détection de points clés du corps humain
+* `hands`: Détection des mains et reconnaissance de gestes
 
-/ask_openai/<filename> → envoie l’image + question texte à OpenAI (vision API) et retourne la réponse
+### B. Gestion des Images
 
-/save_extraction → reçoit une zone sélectionnée (base64) et la sauvegarde dans static/captures/
+| Route | Méthode | Description |
+| :--- | :--- | :--- |
+| `/download/<filename>` | `GET` | Télécharge une image. |
+| `/delete/<filename>` | `POST` | Supprime une image. |
+| `/upload` | `POST` | Upload une image depuis son ordinateur. |
+| `/save_extraction` | `POST` | Sauvegarde une image extraite du canvas (en base64). |
 
-🔹 Caméra (portable PC ↔ Pi)
+### C. Analyse d'Image et IA
 
-Fonction get_frame() → retourne une image depuis :
+| Route | Méthode | Description |
+| :--- | :--- | :--- |
+| `/analyze/<filename>` | `GET`, `POST` | Applique un traitement à une image. |
+| `/ask_openai/<filename>` | `POST` | Pose une question à GPT-4o à propos de l'image. |
 
-Picamera2 (picam2.capture_array()) si dispo
+**Méthodes d'Analyse (`method`):**
 
-sinon OpenCV (cv2.VideoCapture(0))
+* `edges` (Contours)
+* `gray` (Niveaux de gris)
+* `blur` (Flou gaussien)
+* `contrast` (Amélioration du contraste - CLAHE)
+* `sharpen` (Accentuation)
+* `faces` (Détection de visages - DNN)
+* `mediapipe` (Détection d'objets - MediaPipe)
+* `yolo` (Détection d'objets - YOLO)
 
-Utilisée dans :
+### D. Contrôle Matériel (Raspberry Pi uniquement)
 
-generate_frames() (flux live)
+| Route | Méthode | Description |
+| :--- | :--- | :--- |
+| `/move_camera/<direction>` | `POST` | Contrôle les servomoteurs de la caméra. |
+| `direction` = `up`, `down`, `left`, `right`, `reset` | | |
 
-/capture (sauvegarde d’image)
+## Algorithmes de Vision Implémentés
 
-🔹 Grille interactive (analyse.html)
+### Détection de Mouvement
+Utilise la soustraction d'images entre frames successifs et seuillage pour détecter les zones en mouvement.
 
-Grille paramétrable (ex. 4×4, 8×8) superposée sur l’image.
+### Suivi d'Objet (Tracking)
+Initialise un tracker CSRT sur une région d'intérêt (ROI) définie par l'utilisateur et suit l'objet dans les frames suivants.
 
-Numérotation automatique des cases.
+### Détection de Visages
+Réseau de neurones profond (Caffe) pré-entraîné pour détecter les visages avec un score de confiance.
 
-Sélection rectangulaire cliquer-glisser avec la souris.
+### Détection d'Objets (YOLO)
+Utilise le modèle YOLOv11-nano (Ultralytics) pour détecter et localiser une large gamme d'objets (80 classes COCO).
 
-Extraction d’image côté client avec Canvas.
+### Détection d'Objets (MediaPipe)
+Utilise le modèle EfficientDet-Lite0 de MediaPipe pour une détection d'objets rapide et précise.
 
-Sauvegarde côté serveur via /save_extraction.
+### Détection de Pose
+Utilise MediaPipe Pose pour estimer la pose humaine et dessiner les points clés et connections du corps.
 
-Chaque extraction affichée avec bouton ⬇ Télécharger.
+### Détection de Mains et Gestes
+Utilise MediaPipe Hands pour détecter les mains, les points de repère des doigts et reconnaître des gestes simples comme "Pouce levé", "Victoire", etc.
 
-🔹 Intégration OpenAI
+## Configuration et Exécution
 
-Upload image capturée + question utilisateur.
+### Sur un PC Standard (Webcam USB)
+```bash
+python app.py
+```
+* L'application utilise `cv2.VideoCapture(0)`
+* Le mode debug est activé (`debug=True`)
 
-Envoi à gpt-4o-mini ou gpt-4o avec messages multimodaux :
+### Sur un Raspberry Pi (Module caméra)
+* Le script détecte automatiquement la disponibilité de `picamera2`
+* Il initialise les servomoteurs sur les broches 8 et 11
+* Le mode debug est désactivé pour éviter les conflits
+* L'application se lance sur `0.0.0.0:5000`
 
-client.chat.completions.create(\
-    model="gpt-4o-mini",\
-    messages=[\
-        {"role": "system", "content": "Tu es un assistant d'analyse d'image"},\
-        {"role": "user", "content": [\
-            {"type": "text", "text": question},\
-            {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}\
-        ]}\
-    ]\
-)
+## Architecture Technique
 
-🔹 Checklist rapide (dev)
+1. **Initialisation** : L'app vérifie le matériel et charge les modèles ML
+2. **Flux Vidéo** : La fonction `generate_frames()` est un générateur qui produit un flux MJPEG en appliquant le filtre actif
+3. **Traitements** : Les fonctions de traitement (e.g., `detect_objects_yolo()`) sont appelées en fonction du mode sélectionné et modifient le frame avant son envoi
+4. **Interface Web** : Les routes Flask gèrent les interactions utilisateur (clics, uploads, formulaires) et mettent à jour l'état de l'application
+5. **Session** : L'historique de chat avec OpenAI est stocké côté serveur dans l'objet `session` de Flask
 
+## Notes et Points d'Attention
 
- Vérifier que picamera2 est installé sur Raspberry Pi
+* **Performances** : Les modèles lourds (YOLO, MediaPipe) peuvent être gourmands en ressources. Les performances en temps réel dépendront de votre hardware
+* **Raspberry Pi** : L'utilisation de `picamera2` est bien plus optimisée sur Pi qu'OpenCV avec une webcam USB
+* **Sécurité** : L'application est conçue pour un usage en réseau local. Pour un déploiement public, renforcez la sécurité (HTTPS, authentification, validation des uploads)
+* **Clés API** : La clé OpenAI est embarquée dans le code. Pour plus de sécurité, utilisez des variables d'environnement
 
- Vérifier que app.secret_key est défini (si tu utilises des formulaires)
-
- Vérifier que la clef openAI (OPENAI_API_KEY) est bien renseignée dans keys.py si tu veux utiliser les API openAI pour l'analyse d'image
-
-
- Utiliser le fichier flask_app_anaconda.yaml pour créer un environnement virtuel conda avec toutes les dépendances
-
-
+Cette application est un excellent couteau suisse pour expérimenter avec la vision par ordinateur et l'IA !
 
 
 
