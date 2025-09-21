@@ -34,6 +34,8 @@ except ImportError:
 
 angleHB = 0
 angleDG = 0
+motor_tilt = 8
+motor_pan = 11
 
 # Initialisation caméra
 if USE_PICAMERA2:
@@ -47,32 +49,33 @@ if USE_PICAMERA2:
         return frame
 
     def motor_up():
-        global angleHB
+        global angleHB,motor_tilt
         angleHB = angleHB - 5
         #print("angleHB",angleHB)
-        Servo(8).angle(angleHB)
+        Servo(motor_tilt).angle(angleHB)
 
     def motor_down():
-        global angleHB
+        global angleHB,motor_tilt
         angleHB = angleHB + 5
         #print("angleHB",angleHB)
-        Servo(8).angle(angleHB)
+        Servo(motor_tilt).angle(angleHB)
 
     def motor_left():
-        global angleDG
+        global angleDG,motor_pan
         angleDG = angleDG - 5
         #print("angleDG",angleDG)
-        Servo(11).angle(angleDG)
+        Servo(motor_pan).angle(angleDG)
 
     def motor_right():
-        global angleDG
+        global angleDG,motor_pan
         angleDG = angleDG + 5
         #print("angleDG",angleDG)
-        Servo(11).angle(angleDG)
+        Servo(motor_pan).angle(angleDG)
   
     def reset_cam():
-        Servo(8).angle(0)
-        Servo(11).angle(0)
+        global motor_tilt,motor_pan
+        Servo(motor_tilt).angle(0)
+        Servo(motor_pan).angle(0)
 else:
     print("Utilisation de cv2.VideoCapture (webcam USB)")
     camera = cv2.VideoCapture(0)  # 0 = caméra avant , 1 = Caméra arriere
@@ -621,3 +624,4 @@ if __name__ == '__main__':
        app.run(host="0.0.0.0", port=5000, debug=False)
     else:
        app.run(host="0.0.0.0", port=5000, debug=True) # Debug True ne marche pas avec la picamera , conflit
+
