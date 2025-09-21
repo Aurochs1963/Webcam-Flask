@@ -74,18 +74,18 @@ Chaque extraction affichée avec bouton ⬇ Télécharger.
 
 Upload image capturée + question utilisateur.
 
-Envoi à gpt-4o-mini ou gpt-4o avec messages multimodaux :
+Envoi à gpt-4o-mini ou gpt-4o avec messages multimodaux :\
 
-client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": "Tu es un assistant d'analyse d'image"},
-        {"role": "user", "content": [
-            {"type": "text", "text": question},
-            {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}
-        ]}
-    ]
-)
+client.chat.completions.create(\
+    model="gpt-4o-mini",\
+    messages=[\
+        {"role": "system", "content": "Tu es un assistant d'analyse d'image"},\
+        {"role": "user", "content": [\
+            {"type": "text", "text": question},\
+            {"type": "image_url", "image_url": {"url": f"file://{image_path}"}}\
+        ]}\
+    ]\
+)\
 
 🔹 Checklist rapide (dev)
 
@@ -98,6 +98,7 @@ client.chat.completions.create(
 
 
  Utiliser le fichier flask_app_anaconda.yaml pour créer un environnement virtuel conda avec toutes les dépendances
+
 
 
 
