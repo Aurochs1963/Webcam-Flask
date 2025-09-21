@@ -1,4 +1,4 @@
-#📋 Documentation rapide – Projet Flask Webcam PC / PiCamera2
+# 📋 Documentation rapide – Projet Flask Webcam PC / PiCamera2
 🔹 Dépendances principales
 
 flask
@@ -95,3 +95,4 @@ client.chat.completions.create(
 
 
  Utiliser le fichier flask_app_anaconda.yaml pour créer un environnement virtuel conda avec toutes les dépendances
+
