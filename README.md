@@ -1,4 +1,4 @@
-📋 Documentation rapide – Projet Flask Webcam PC / PiCamera2
+#📋 Documentation rapide – Projet Flask Webcam PC / PiCamera2
 🔹 Dépendances principales
 
 flask
@@ -11,15 +11,15 @@ openai (si tu utilises l’analyse IA)
 
 🔹 Structure projet
 
-Webcam-Flask/
-│── app.py
-│── keys.py
-│── templates/
-│   ├── index.html        (page avec la webcam + boutons capture/analyse)
-│   └── analyze.html      (analyse + grille interactive + OpenAI)
-│── static/               (images capturées et extraites)
-│── models/               (modèles d'analyse des images (Yolo, mediapipe,...))
-│── uploads/              (vidéos uploadées)
+Webcam-Flask/\
+│── app.py\
+│── keys.py\
+│── templates/\
+│   ├── index.html        (page avec la webcam + boutons capture/analyse)\
+│   └── analyze.html      (analyse + grille interactive + OpenAI)\
+│── static/               (images capturées et extraites)\
+│── models/               (modèles d'analyse des images (Yolo, mediapipe,...))\
+│── uploads/              (vidéos uploadées)\
 
 🔹 Routes Flask
 
@@ -92,5 +92,6 @@ client.chat.completions.create(
  Vérifier que app.secret_key est défini (si tu utilises des formulaires)
 
  Vérifier que la clef openAI (OPENAI_API_KEY) est bien renseignée dans keys.py si tu veux utiliser les API openAI pour l'analyse d'image
+
 
  Utiliser le fichier flask_app_anaconda.yaml pour créer un environnement virtuel conda avec toutes les dépendances
