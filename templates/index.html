@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Webcam Flask</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1b2a; /* Fond bleu sombre */
+      text-align: center;
+      padding: 20px;
+      color: #f4f4f9; /* Texte clair */
+    }
+	h1 {
+      text-align: center;
+      color: #ffffff;
+      font-size: 3rem;  /* Titre agrandi */
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #e0e0e0;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+     .btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #1d4ed8; /* Bleu vif */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .btn:hover {
+      background: #1e40af; /* Bleu plus foncé au hover */
+    }
+    .gallery {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .gallery-item {
+      background: #ffffff; /* Carte blanche */
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .gallery-item img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      transition: transform 0.3s ease;
+    }
+    .gallery-item img:hover {
+      transform: scale(1.05);
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+.control-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background-color: #2563eb; /* Bleu clair */
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: #1e3a8a; /* Plus foncé */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+/* Styles de la modale plein écran */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 50px;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9);
+}
+.modal-content {
+    display: block;
+    margin: auto;
+    max-width: 90%;
+    max-height: 90%;
+}
+.close {
+    position: absolute;
+    top: 20px; right: 40px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.button-group {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+}
+.small-btn {
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: white;
+}
+.delete-btn {
+    background: #e74c3c;
+}
+.analyze-btn {
+    background: #3498db;
+}
+.download-btn {
+    background: #2ecc71;
+}
+.small-btn:hover {
+    opacity: 0.85;
+}
+.video-container {
+    position: relative;
+    display: inline-block;
+}
+#video {
+    max-width: 640px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    display: block;
+}
+#overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    pointer-events: auto;
+}
+   .controls {
+		margin-top: 15px;
+	}
+	select, button {
+		padding: 6px 10px;
+		margin: 5px;
+		font-size: 14px;
+	}
+ </style>
+
+</head>
+<body>
+
+<h1>📷 Webcam Flask</h1>
+
+<div class="controls">
+    <label for="camera">Caméra :</label>
+    <select id="camera" onchange="changeCamera(this.value)">
+        <option value="0">Avant</option>
+        <option value="1">Arrière</option>
+        <option value="file">Fichier vidéo</option>
+    </select>
+</div>
+
+
+<div style="display:flex; gap:30px; align-items:flex-start;">
+  <!-- Colonne caméra -->
+  <div class="video-container">
+       <img id="video" src="{{ url_for('video') }}" alt="Flux vidéo">
+	   <canvas id="overlay"></canvas>
+  </div>
+
+  <!-- Colonne contrôle (boutons) -->
+  <div style="display:flex; flex-direction:column; gap:15px;">
+    <button class="control-btn" onclick="moveCamera('up')">⬆️ Haut</button>
+    <button class="control-btn" onclick="moveCamera('down')">⬇️ Bas</button>
+    <button class="control-btn" onclick="moveCamera('left')">⬅️ Gauche</button>
+    <button class="control-btn" onclick="moveCamera('right')">➡️ Droite</button>
+    <button class="control-btn" onclick="moveCamera('reset')">Reset</button>
+  </div>
+</div>
+
+  <div class="controls">
+		<label for="filter">Filtre vidéo :</label>
+		<select id="filter" onchange="changeFilter(this.value)">
+			<option value="normal">Normal</option>
+			<option value="motion">Détection de mouvement</option>
+			<option value="track">Suivi d’objet (CSRT)</option>
+			<option value="yolo">Détection d’objets (YOLO)</option>
+			<option value="mediapipe">Détection d’objets (mediapipe)</option>
+			<option value="pose">Suivi des poses</option>
+			<option value="hands">Suivi des mains</option>
+		</select>
+		<button onclick="startSelection()">Sélectionner une zone</button>
+  </div>
+
+  <div>
+      <form action="{{ url_for('capture') }}" method="post">
+        <button type="submit" class="btn">✨ Capturer une image</button>
+      </form>
+  </div>
+
+
+	<div style="margin:20px 0; text-align:center;">
+	  <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+		<input type="file" name="file" accept="image/*" required>
+		<button type="submit" class="btn" style="background:#17a2b8;">📤 Uploader une image</button>
+	  </form>
+	</div>
+
+    {% if captures %}
+      <h2>🖼 Galerie des captures</h2>
+      <div class="gallery">
+        {% for img in captures %}
+          <div class="gallery-item">
+              <!-- Image cliquable -->
+              <img src="{{ url_for('static', filename=img) }}" 
+                   alt="Capture" 
+                   onclick="openFullscreen(this)">
+			 <div class="button-group">
+				<form method="post" action="{{ url_for('delete', filename=img) }}">
+					<button type="submit" class="small-btn delete-btn">🗑️</button>
+				</form>
+				<form method="get" action="{{ url_for('analyze', filename=img) }}">
+					<button type="submit" class="small-btn analyze-btn">🔍</button>
+				</form>
+				<a href="{{ url_for('download', filename=img) }}" 
+				   download="{{ img }}">
+				   <button type="button" class="small-btn download-btn">⬇️</button>
+				</a>
+			</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+<!-- Fenêtre modale pour affichage plein écran -->
+<div id="fullscreenModal" class="modal" onclick="closeFullscreen()">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="fullscreenImg">
+</div>
+<script>
+	function moveCamera(direction) {
+	  fetch(`/move_camera/${direction}`, { method: 'POST' })
+		.then(res => res.json())
+		.then(data => console.log(data));
+	}
+	function openFullscreen(img) {
+		let modal = document.getElementById("fullscreenModal");
+		let modalImg = document.getElementById("fullscreenImg");
+		modal.style.display = "block";
+		modalImg.src = img.src;
+	}
+	function closeFullscreen() {
+		document.getElementById("fullscreenModal").style.display = "none";
+	}
+    
+	function changeFilter(mode) {
+        fetch(`/set_filter?mode=${mode}`);
+    }
+
+	function changeCamera(index) {
+	  if (index === "file") {
+		const fileInput = document.createElement("input");
+		fileInput.type = "file";
+		fileInput.accept = "video/*";
+		fileInput.onchange = () => {
+		  const formData = new FormData();
+		  formData.append("video", fileInput.files[0]);
+		  fetch("/set_video", { method: "POST", body: formData });
+		};
+		fileInput.click();
+	  } else {
+		fetch(`/set_camera?index=${index}`);
+	  }
+	}
+	
+	let selecting = false;
+	let startX, startY, endX, endY;
+	const video = document.getElementById("video");
+	const canvas = document.getElementById("overlay");
+	const ctx = canvas.getContext("2d");
+
+	function resizeCanvas() {
+		canvas.width = video.clientWidth;
+		canvas.height = video.clientHeight;
+	}
+	window.onload = resizeCanvas;
+	window.onresize = resizeCanvas;
+
+	function startSelection() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		canvas.onmousedown = (e) => {
+			startX = e.offsetX;
+			startY = e.offsetY;
+		};
+
+		canvas.onmousemove = (e) => {
+			if (startX != null && startY != null) {
+				endX = e.offsetX;
+				endY = e.offsetY;
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.strokeStyle = "red";
+				ctx.lineWidth = 2;
+				ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+			}
+		};
+
+		canvas.onmouseup = (e) => {
+			endX = e.offsetX;
+			endY = e.offsetY;
+
+			const rect = {
+				x: Math.min(startX, endX),
+				y: Math.min(startY, endY),
+				w: Math.abs(endX - startX),
+				h: Math.abs(endY - startY),
+				img_w: video.clientWidth,
+				img_h: video.clientHeight
+			};
+
+			fetch("/set_roi_web", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(rect)
+			});
+
+			startX = startY = null;
+		};
+
+	}
+</script>
+</body>
+</html>
